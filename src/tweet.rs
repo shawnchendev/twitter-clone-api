@@ -1,22 +1,24 @@
 use actix_web::web::{Json, Path};
-use actix_web::HttpResponse;
+use actix_web::{get, post, HttpResponse};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::constants::APPLICATION_JSON;
-pub type Tweets = Respond<Tweets>;
+use crate::response::Response;
+
+pub type Tweets = Response<Tweet>;
 
 #[derive(Debug, Deserialize, Serialize)]
 
-pub struct Tweets {
+pub struct Tweet {
     pub id: String,
     pub created_at: DateTime<Utc>,
     pub message: String,
 }
 
 impl Tweet {
-    pub fn new(message: String) -> self {
+    pub fn new(message: String) -> Self {
         Self {
             id: Uuid::new_v4().to_string(),
             created_at: Utc::now(),
@@ -31,9 +33,9 @@ pub struct TweetRequest {
 }
 
 impl TweetRequest {
-    pub fn to_tweet(&self) -> Option<Tweet>{
-        match &self.message{
-            Some(message) => Some(Tweet::new(Message.to_string())),
+    pub fn to_tweet(&self) -> Option<Tweet> {
+        match &self.message {
+            Some(message) => Some(Tweet::new(message.to_string())),
             None => None,
         }
     }
@@ -41,18 +43,39 @@ impl TweetRequest {
 
 #[get("/tweets")]
 pub async fn list() -> HttpResponse {
-    let tweets = Tweets {results: vec![]};
+    let tweets = Tweets { results: vec![] };
 
-    HttpResponse::Ok().content_type(APPLICATION_JSON).json(tweets);
+    HttpResponse::Ok()
+        .content_type(APPLICATION_JSON)
+        .json(tweets)
 }
 
 #[post("/tweets")]
-pub async fn create(tweet_req:Json<TweetRequest>) -> HttpResponse {
-    HttpResponse::Created().content_type(APPLICATION_JSON).json(tweet_req.to_tweet())
+pub async fn create(tweet_req: Json<TweetRequest>) -> HttpResponse {
+    HttpResponse::Created()
+        .content_type(APPLICATION_JSON)
+        .json(tweet_req.to_tweet())
 }
 
 #[get("/tweets/{id}")]
+pub async fn get(path: Path<(String,)>) -> HttpResponse {
+    let found_tweet: Option<Tweet> = None;
 
-pub async fn get(path: Path<(String, )>) -> HttpResponse{
-    let found_tweets : Option<Tweet> =None;
+    match found_tweet {
+        Some(tweet) => HttpResponse::Ok()
+            .content_type(APPLICATION_JSON)
+            .json(tweet),
+        None => HttpResponse::Ok()
+            .content_type(APPLICATION_JSON)
+            .await
+            .unwrap(),
+    }
+}
+
+#[delete("/tweets/{id}")]
+pub async fn delete(path: Path<(String,)>) -> HttpResponse {
+    HttpResponse::NoContent()
+        .content_type(APPLICATION_JSON)
+        .await
+        .unwrap()
 }
